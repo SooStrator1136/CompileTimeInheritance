@@ -1,0 +1,51 @@
+plugins {
+    id 'java-gradle-plugin'
+    id 'java'
+}
+
+group 'dev.soostrator'
+version '0.1'
+
+repositories.mavenCentral()
+
+configurations {
+    embedded
+}
+
+dependencies {
+    annotationProcessor 'org.projectlombok:lombok:1.18.24'
+    compileOnly 'org.projectlombok:lombok:1.18.24'
+    embedded 'asm:asm-tree:3.3.1'
+
+    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.8.1'
+    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.8.1'
+
+    implementation configurations.embedded
+}
+
+tasks.jar {
+    duplicatesStrategy DuplicatesStrategy.EXCLUDE
+
+    from {
+        configurations.embedded.collect {
+            it.isDirectory() ? it : zipTree(it)
+        }
+    }
+}
+
+gradlePlugin.plugins.create("InheritanceResolver") {
+    id = 'dev.soostrator.resolver'
+    implementationClass = 'dev.soostrator.cti.plugin.ResolverPlugin'
+}
+
+test.useJUnitPlatform()
+
+java {
+    withSourcesJar()
+    withJavadocJar()
+}
+
+compileJava {
+    sourceCompatibility = '1.8'
+    targetCompatibility = '1.8'
+}

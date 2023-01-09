@@ -1,0 +1,8 @@
+# Project exclude paths
+/.gradle/
+/build/
+/CtiDsl/build/
+/CtiDsl/build/classes/java/main/
+/CtiPlugin/build/
+/CtiPlugin/build/classes/java/main/
+/CtiPlugin/build/classes/java/test/

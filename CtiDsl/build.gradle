@@ -1,0 +1,16 @@
+plugins {
+    id 'java'
+}
+
+group 'dev.soostrator'
+version '0.1'
+
+java {
+    withSourcesJar()
+    withJavadocJar()
+}
+
+compileJava {
+    sourceCompatibility = '1.8'
+    targetCompatibility = '1.8'
+}

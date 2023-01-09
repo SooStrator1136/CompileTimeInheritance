@@ -1,0 +1,6 @@
+plugins {
+    id 'java'
+}
+
+group 'dev.soostrator'
+version '0.1'
