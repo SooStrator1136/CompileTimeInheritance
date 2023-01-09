@@ -1,4 +1,4 @@
-package dev.soostrator.cti;
+package me.soostrator.cti;
 
 /**
  * @author SooStrator1136

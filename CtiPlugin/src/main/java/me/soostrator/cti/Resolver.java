@@ -1,4 +1,4 @@
-package dev.soostrator.cti;
+package me.soostrator.cti;
 
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.Opcodes;
@@ -69,7 +69,7 @@ public class Resolver {
             if (abstractInsnNode.getType() == 5) {
                 final MethodInsnNode methodInsnNode = (MethodInsnNode) abstractInsnNode;
 
-                if (methodInsnNode.name.contentEquals("resolveAllHeirs") && methodInsnNode.owner.contentEquals("dev/soostrator/cti/InheritanceResolver") && methodInsnNode.desc.contentEquals("(Ljava/lang/Class;)[Ljava/lang/Class;")) {
+                if (methodInsnNode.name.contentEquals("resolveAllHeirs") && methodInsnNode.owner.contentEquals("me/soostrator/cti/InheritanceResolver") && methodInsnNode.desc.contentEquals("(Ljava/lang/Class;)[Ljava/lang/Class;")) {
                     isModified = true;
 
                     final String superClass = ((Type) ((LdcInsnNode) methodInsnNode.getPrevious()).cst).getInternalName();

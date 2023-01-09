@@ -1,4 +1,4 @@
-package dev.soostrator.cti;
+package me.soostrator.cti;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;

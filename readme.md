@@ -17,7 +17,7 @@ buildscript {
     }
 }
 
-apply plugin: 'dev.soostrator.resolver'
+apply plugin: 'me.soostrator.resolver'
 ```
 
 #### Adding the dsl to the dependencies section:
@@ -31,7 +31,7 @@ dependencies {
 #### Setting up a ResolverTask:
 
 ```groovy
-tasks.register("ResolveBuild", dev.soostrator.cti.plugin.ResolverTask) {
+tasks.register("resolveBuild", me.soostrator.cti.plugin.ResolverTask) {
     setGroup(rootProject.name)
 
     String jarName = "${rootProject.name}-${version}"
@@ -45,7 +45,7 @@ tasks.register("ResolveBuild", dev.soostrator.cti.plugin.ResolverTask) {
 #### Linking the resolve task to the build task:
 
 ```groovy
-tasks.build.finalizedBy tasks.ResolveBuild
+tasks.build.finalizedBy tasks.resolveBuild
 ```
 
 Now you can use the plugin to find subclasses in your project.
@@ -77,7 +77,7 @@ public final class Bar {
 After the resolve task ``InheritanceResolver.resolveAllHeirs(Foo.class)`` will be replaced
 by ``new Class[]{Foo711.class, FooFan.class}``.
 
-## Goals:
+## Features:
 
 - [x] Resolve all child classes of a superclass (Aka make it actually work)
 - [ ] Also resolve classes that inherit a child class and not the superclass directly

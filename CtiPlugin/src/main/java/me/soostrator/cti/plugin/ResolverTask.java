@@ -1,7 +1,6 @@
-package dev.soostrator.cti.plugin;
+package me.soostrator.cti.plugin;
 
-import dev.soostrator.cti.Resolver;
-import groovy.lang.Closure;
+import me.soostrator.cti.Resolver;
 import lombok.Getter;
 import lombok.Setter;
 import org.gradle.api.DefaultTask;

@@ -1,4 +1,4 @@
-package dev.soostrator.cti.plugin;
+package me.soostrator.cti.plugin;
 
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;

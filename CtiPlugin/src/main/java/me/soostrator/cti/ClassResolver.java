@@ -1,4 +1,4 @@
-package dev.soostrator.cti;
+package me.soostrator.cti;
 
 import lombok.Getter;
 import org.objectweb.asm.ClassReader;

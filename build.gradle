@@ -2,5 +2,5 @@ plugins {
     id 'java'
 }
 
-group 'dev.soostrator'
+group 'me.soostrator'
 version '0.1'

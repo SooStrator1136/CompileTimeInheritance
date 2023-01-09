@@ -1,4 +1,4 @@
-package dev.soostrator.cti;
+package me.soostrator.cti;
 
 import lombok.Getter;
 import org.objectweb.asm.tree.ClassNode;
@@ -15,10 +15,10 @@ class ClassInfo {
     private final List<String> superClasses = new ArrayList<>(1);
 
     ClassInfo(final ClassNode classNode, final ClassResolver resolver) {
-        superClasses.add(classNode.superName);
+        this.superClasses.add(classNode.superName);
         if (classNode.interfaces != null) {
             for (final Object interfaceRaw : classNode.interfaces) {
-                superClasses.add((String) interfaceRaw);
+                this.superClasses.add((String) interfaceRaw);
             }
         }
     }

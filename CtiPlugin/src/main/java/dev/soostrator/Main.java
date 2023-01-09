@@ -1,6 +1,6 @@
 package dev.soostrator;
 
-import dev.soostrator.cti.Resolver;
+import me.soostrator.cti.Resolver;
 
 import java.io.File;
 import java.util.regex.Pattern;
