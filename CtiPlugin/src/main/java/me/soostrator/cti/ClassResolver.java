@@ -6,6 +6,7 @@ import org.objectweb.asm.tree.ClassNode;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.List;
@@ -25,7 +26,7 @@ final class ClassResolver {
     private final Map<ClassNode, String> jarLocations = new HashMap<>(10);
 
     @Getter
-    private final Map<String, ClassInfo> classInfo = new HashMap<>(2);
+    private final Map<String, Collection<String>> classInfo = new HashMap<>(2);
 
     ClassResolver(final JarFile jar) {
         final Enumeration<JarEntry> entries = jar.entries();
@@ -45,7 +46,7 @@ final class ClassResolver {
         }
 
         for (final ClassNode classNode : this.classNodes) {
-            this.classInfo.put(classNode.name, new ClassInfo(classNode, this));
+            this.classInfo.put(classNode.name, ClassInfo.superClasses(classNode, this));
         }
 
         try {
@@ -55,11 +56,10 @@ final class ClassResolver {
         }
     }
 
-    List<String> resolveAllHeirs(final String superClass) {
+    List<String> resolveAllHeirs(final String superClass) { //TODO not all are being resolved wtf
         final List<String> resolvedHeirs = new ArrayList<>(1);
-
         for (final ClassNode classNode : this.classNodes) {
-            if (this.classInfo.get(classNode.name).getSuperClasses().contains(superClass)) {
+            if (this.classInfo.get(classNode.name).contains(superClass)) {
                 resolvedHeirs.add(classNode.name);
             }
         }

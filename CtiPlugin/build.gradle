@@ -6,7 +6,7 @@ plugins {
 }
 
 group 'me.soostrator'
-version '0.1'
+version '0.7'
 
 repositories.mavenCentral()
 
@@ -56,8 +56,6 @@ compileJava {
     targetCompatibility = '1.8'
 }
 
-publishing.publications.create("maven", MavenPublication.class).from(components.java)
+//publishing.publications.create("maven", MavenPublication.class).from(components.java) //TODO comment out for plugin publishing
 
-signing {
-    sign publishing.publications.maven
-}
+//signing.sign publishing.publications.maven

@@ -48,6 +48,15 @@ tasks.register("resolveBuild", me.soostrator.cti.plugin.ResolverTask) {
 tasks.build.finalizedBy tasks.resolveBuild
 ```
 
+#### You can configure some of the plugins behavior using the ``resolver`` extension:
+
+```groovy
+resolver {
+    useClassForName = false
+    onlyDirectParents = false
+}
+```
+
 Now you can use the plugin to find subclasses in your project.
 
 #### Example:
@@ -77,11 +86,12 @@ public final class Bar {
 After the resolve task ``InheritanceResolver.resolveAllHeirs(Foo.class)`` will be replaced
 by ``new Class[]{Foo711.class, FooFan.class}``.
 
-## Features:
+## Roadmap:
 
 - [x] Resolve all child classes of a superclass (Aka make it actually work)
-- [ ] Also resolve classes that inherit a child class and not the superclass directly
-- [ ] Add option to use Class.forName to allow out of scope classes
+- [x] Also resolve classes that inherit a child class and not the superclass directly
+- [x] Add option to use Class.forName to allow out of scope classes
 - [ ] Add actual logging
 - [ ] Cleanup the nesting and general code
 - [ ] Write tests
+- [ ] Document code
