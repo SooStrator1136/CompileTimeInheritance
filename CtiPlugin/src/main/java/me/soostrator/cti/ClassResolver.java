@@ -1,18 +1,14 @@
 package me.soostrator.cti;
 
 import lombok.Getter;
-import org.objectweb.asm.ClassReader;
+import me.soostrator.cti.plugin.ResolverPlugin;
 import org.objectweb.asm.tree.ClassNode;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.jar.JarEntry;
-import java.util.jar.JarFile;
 
 /**
  * @author SooStrator1136
@@ -28,31 +24,23 @@ final class ClassResolver {
     @Getter
     private final Map<String, Collection<String>> classInfo = new HashMap<>(2);
 
-    ClassResolver(final JarFile jar) {
-        final Enumeration<JarEntry> entries = jar.entries();
-
-        while (entries.hasMoreElements()) {
-            final JarEntry currentEntry = entries.nextElement();
-
-            if (!currentEntry.getName().endsWith(".class")) continue;
-
+    ClassResolver(final Iterable<byte[]> classes) {
+        for (final byte[] classBytes : classes) {
             try {
-                final ClassNode node = toNode(Utilities.bytesOfInputStream(jar.getInputStream(currentEntry)));
+                final ClassNode node = Utilities.toNode(classBytes);
                 this.classNodes.add(node);
-                this.jarLocations.put(node, currentEntry.getName());
-            } catch (final IOException e) {
-                e.printStackTrace(); //TODO logging oml
+                this.jarLocations.put(node, node.name + ".class");
+            } catch (final Throwable t) {
+                if (!ResolverPlugin.CONFIG.isSkipFailingClasses()) {
+                    //noinspection ProhibitedExceptionThrown
+                    throw t;
+                }
             }
         }
 
+        //Running after all class nodes have been added since we need them for resolving
         for (final ClassNode classNode : this.classNodes) {
             this.classInfo.put(classNode.name, ClassInfo.superClasses(classNode, this));
-        }
-
-        try {
-            jar.close();
-        } catch (final IOException e) {
-            e.printStackTrace(); //Logging
         }
     }
 
@@ -65,12 +53,6 @@ final class ClassResolver {
         }
 
         return resolvedHeirs;
-    }
-
-    private static ClassNode toNode(final byte[] bytes) {
-        final ClassNode node = new ClassNode();
-        new ClassReader(bytes).accept(node, ClassReader.EXPAND_FRAMES);
-        return node;
     }
 
 }

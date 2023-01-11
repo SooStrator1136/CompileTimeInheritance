@@ -11,11 +11,13 @@ import org.gradle.api.tasks.TaskAction;
 import java.io.File;
 
 /**
+ *
+ *
  * @author SooStrator1136
  */
 @Getter
 @Setter
-public class ResolverTask extends DefaultTask {
+public class ResolveJarTask extends DefaultTask {
 
     @InputFile
     private File inputJar;
@@ -29,7 +31,7 @@ public class ResolverTask extends DefaultTask {
             this.setDidWork(false);
             return;
         }
-        this.setDidWork(Resolver.resolveAll(this.inputJar, this.outputJar));
+        this.setDidWork(Resolver.resolveJar(this.inputJar, this.outputJar));
     }
 
 }

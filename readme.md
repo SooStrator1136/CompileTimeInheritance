@@ -20,18 +20,22 @@ buildscript {
 apply plugin: 'me.soostrator.resolver'
 ```
 
-#### Adding the dsl to the dependencies section:
+#### Adding the dsl:
 
 ```groovy
+repositories {
+    maven { url = uri("https://jitpack.io") }
+}
+
 dependencies {
-    implementation files('path/to/dsl.jar')
+    implementation 'com.github.SooStrator1136:CompileTimeInheritance:master-SNAPSHOT'
 }
 ```
 
-#### Setting up a ResolverTask:
+#### Setting up a ResolveJarTask:
 
 ```groovy
-tasks.register("resolveBuild", me.soostrator.cti.plugin.ResolverTask) {
+tasks.register("resolveBuild", me.soostrator.cti.plugin.ResolveJarTask) {
     setGroup(rootProject.name)
 
     String jarName = "${rootProject.name}-${version}"
@@ -53,7 +57,7 @@ tasks.build.finalizedBy tasks.resolveBuild
 ```groovy
 resolver {
     useClassForName = false
-    onlyDirectParents = false
+    resolveFoundJars = false
 }
 ```
 
@@ -91,6 +95,7 @@ by ``new Class[]{Foo711.class, FooFan.class}``.
 - [x] Resolve all child classes of a superclass (Aka make it actually work)
 - [x] Also resolve classes that inherit a child class and not the superclass directly
 - [x] Add option to use Class.forName to allow out of scope classes
+- [x] Add task to process classes from a directory and not from a jar
 - [ ] Add actual logging
 - [ ] Cleanup the nesting and general code
 - [ ] Write tests

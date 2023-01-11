@@ -4,6 +4,8 @@ import org.gradle.api.Plugin;
 import org.gradle.api.Project;
 
 /**
+ * The gradle plugin class, registers the {@link  ResolverExtension} and makes the {@link ResolveJarTask} available.
+ *
  * @author SooStrator1136
  */
 @SuppressWarnings("unused")

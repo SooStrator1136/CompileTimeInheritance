@@ -1,5 +1,6 @@
 package me.soostrator.cti;
 
+import me.soostrator.cti.plugin.ResolverPlugin;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
@@ -13,17 +14,13 @@ import org.objectweb.asm.tree.MethodNode;
 import org.objectweb.asm.tree.TypeInsnNode;
 
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.StandardOpenOption;
-import java.util.Enumeration;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipFile;
-import java.util.zip.ZipOutputStream;
+import java.util.regex.Pattern;
 
 /**
  * @author SooStrator1136
@@ -31,12 +28,14 @@ import java.util.zip.ZipOutputStream;
 @SuppressWarnings("HardcodedFileSeparator")
 public class Resolver {
 
-    @SuppressWarnings({"CallToPrintStackTrace", "BooleanMethodNameMustStartWithQuestion"})
-    public static boolean resolveAll(final File in, final File out) {
+    private static final Pattern FILE_EXTENSION = Pattern.compile("[.][^.]+$");
+
+    @SuppressWarnings("CallToPrintStackTrace")
+    public static boolean resolveJar(final File in, final File out) {
         final Map<String, byte[]> editedEntries = new HashMap<>(4);
 
-        try {
-            final ClassResolver resolver = new ClassResolver(new JarFile(in));
+        try (final JarFile jar = new JarFile(in)) {
+            final ClassResolver resolver = new ClassResolver(Utilities.getClassBytes(jar));
 
             for (final ClassNode classNode : resolver.getClassNodes()) {
                 boolean wasModified = false;
@@ -45,18 +44,80 @@ public class Resolver {
                 }
 
                 if (wasModified) {
-                    final ClassWriter classWriter = new ClassWriter(0);
-                    classNode.accept(classWriter);
-                    editedEntries.put(resolver.getJarLocations().get(classNode), classWriter.toByteArray());
+                    editedEntries.put(resolver.getJarLocations().get(classNode), Utilities.toBytes(classNode));
                 }
             }
 
-            saveToJar(editedEntries, in, out);
+            Utilities.saveToJar(editedEntries, in, out);
         } catch (final IOException e) {
             e.printStackTrace();
         }
 
         return !editedEntries.isEmpty();
+    }
+
+    public static boolean resolveClasses(final File startDirectory) {
+        final Map<File, byte[]> editedClasses = new HashMap<>(4);
+
+        final List<File> classFiles = Utilities.getSubFiles(startDirectory);
+
+        if (ResolverPlugin.CONFIG.isResolveFoundJars()) {
+            for (final File file : classFiles) {
+                if (!file.getName().endsWith(".jar")) continue;
+
+                Resolver.resolveJar(
+                        file,
+                        new File(FILE_EXTENSION.matcher(file.getAbsolutePath()).replaceFirst("") + ResolverPlugin.CONFIG.getJarExtension() + ".jar")
+                );
+            }
+        }
+
+        //Remove non-class files
+        classFiles.removeIf(file -> !file.getName().endsWith(".class"));
+
+        final Map<String, File> classLocations = new HashMap<>(classFiles.size());
+
+        for (final File file : classFiles) {
+            classLocations.put(
+                    file.getAbsolutePath().substring(
+                            startDirectory.getAbsolutePath().length() + 1
+                    ).replaceAll(Pattern.quote(File.separator), "/"),
+                    file
+            );
+        }
+
+        try {
+            final ClassResolver resolver = new ClassResolver(Utilities.getFilesBytes(classFiles));
+
+            for (final ClassNode classNode : resolver.getClassNodes()) {
+                boolean wasModified = false;
+
+                for (final Object methodNodeRaw : classNode.methods) {
+                    wasModified = wasModified || checkModifyMethod((MethodNode) methodNodeRaw, resolver);
+                }
+
+                if (wasModified) {
+                    editedClasses.put(
+                            classLocations.get(resolver.getJarLocations().get(classNode)),
+                            Utilities.toBytes(classNode)
+                    );
+                }
+            }
+        } catch (final IOException e) {
+            e.printStackTrace(); //Logging
+        }
+
+        for (final Map.Entry<File, byte[]> entry : editedClasses.entrySet()) {
+            System.out.println(entry);
+            try (final FileOutputStream out = new FileOutputStream(entry.getKey())) {
+                out.write(entry.getValue());
+            } catch (final IOException e) {
+                e.printStackTrace(); //logging
+            }
+        }
+
+
+        return !editedClasses.isEmpty();
     }
 
     private static boolean checkModifyMethod(final MethodNode toModify, final ClassResolver resolver) {
@@ -72,12 +133,27 @@ public class Resolver {
                 if (methodInsnNode.name.contentEquals("resolveAllHeirs") && methodInsnNode.owner.contentEquals("me/soostrator/cti/InheritanceResolver") && methodInsnNode.desc.contentEquals("(Ljava/lang/Class;)[Ljava/lang/Class;")) {
                     isModified = true;
 
-                    final String superClass = ((Type) ((LdcInsnNode) methodInsnNode.getPrevious()).cst).getInternalName();
+                    AbstractInsnNode prevNode = methodInsnNode;
 
-                    AbstractInsnNode prevNode = methodInsnNode.getPrevious().getPrevious();
+                    LdcInsnNode superClassNode = null;
+
+                    int iterations = 0;
+                    while (superClassNode == null) {
+                        prevNode = prevNode.getPrevious();
+                        iterations++;
+
+                        if (prevNode instanceof LdcInsnNode) {
+                            superClassNode = (LdcInsnNode) prevNode;
+                        }
+                    }
+
+                    final String superClass = ((Type) superClassNode.cst).getInternalName();
+
+                    //noinspection ReuseOfLocalVariable
+                    prevNode = iterations == 1 ? methodInsnNode.getPrevious().getPrevious() : methodInsnNode.getPrevious();
 
                     //Remove the 2 call instructions
-                    toModify.instructions.remove(methodInsnNode.getPrevious());
+                    toModify.instructions.remove(superClassNode);
                     toModify.instructions.remove(methodInsnNode);
 
                     final List<String> heirs = resolver.resolveAllHeirs(superClass);
@@ -112,36 +188,6 @@ public class Resolver {
         }
 
         return isModified;
-    }
-
-    @SuppressWarnings({"NestedTryStatement", "CallToPrintStackTrace"})
-    private static void saveToJar(final Map<String, byte[]> editedEntries, final File sourceJar, final File outJar) {
-        try (final ZipOutputStream out = new ZipOutputStream(Files.newOutputStream(outJar.toPath(), StandardOpenOption.CREATE))) {
-            try (final ZipFile zip = new ZipFile(sourceJar)) {
-                final Enumeration<? extends ZipEntry> entries = zip.entries();
-
-                while (entries.hasMoreElements()) {
-                    final ZipEntry currentEntry = entries.nextElement();
-
-                    out.putNextEntry(new ZipEntry(currentEntry.getName()));
-
-                    if (editedEntries.containsKey(currentEntry.getName())) {
-                        out.write(editedEntries.get(currentEntry.getName()));
-                    } else {
-                        out.write(Utilities.bytesOfInputStream(zip.getInputStream(currentEntry)));
-                    }
-
-                    out.closeEntry();
-                }
-
-            } catch (@SuppressWarnings("OverlyBroadCatchBlock") final IOException e) {
-                e.printStackTrace();
-            }
-
-            out.closeEntry();
-        } catch (final IOException e) {
-            e.printStackTrace();
-        }
     }
 
 }
